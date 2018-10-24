@@ -73,8 +73,9 @@ class State(Eventful):
 
     _published_events = {'generate_testcase'}
 
-    def __init__(self, constraints, platform, **kwargs):
+    def __init__(self, constraints, platform, manticore=None, **kwargs):
         super().__init__(**kwargs)
+        self._manticore = None  # back ref
         self._platform = platform
         self._constraints = constraints
         self._platform.constraints = constraints
@@ -118,6 +119,7 @@ class State(Eventful):
         new_state._input_symbols = list(self._input_symbols)
         new_state._context = copy.copy(self._context)
 
+        new_state._manticore = self._manticore
         self.copy_eventful_state(new_state)
 
         self._child = new_state
@@ -488,4 +490,5 @@ class State(Eventful):
         :param str name: Short string identifying this testcase used to prefix workspace entries.
         :param str message: Longer description
         """
-        self._publish('will_generate_testcase', name, message)
+        if self._manticore is not None:
+            self._manticore._generate_testcase_callback(self, name, message)

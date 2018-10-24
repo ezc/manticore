@@ -35,10 +35,10 @@ logger = logging.getLogger(__name__)
 log.init_logging()
 
 
-def make_decree(program, concrete_start='', **kwargs):
+def make_decree(m, program, concrete_start='', **kwargs):
     constraints = ConstraintSet()
     platform = decree.SDecree(constraints, program)
-    initial_state = State(constraints, platform)
+    initial_state = State(constraints, platform, m)
     logger.info('Loading program %s', program)
 
     if concrete_start != '':
@@ -48,7 +48,7 @@ def make_decree(program, concrete_start='', **kwargs):
     return initial_state
 
 
-def make_linux(program, argv=None, env=None, entry_symbol=None, symbolic_files=None, concrete_start=''):
+def make_linux(m, program, argv=None, env=None, entry_symbol=None, symbolic_files=None, concrete_start=''):
     env = {} if env is None else env
     argv = [] if argv is None else argv
     env = [f'{k}={v}' for k, v in env.items()]
@@ -68,7 +68,7 @@ def make_linux(program, argv=None, env=None, entry_symbol=None, symbolic_files=N
             #TODO: use argv as arguments for function
             platform.set_entry(entry_pc)
 
-    initial_state = State(constraints, platform)
+    initial_state = State(constraints, platform, m)
 
     if concrete_start != '':
         logger.info('Starting with concrete input: %s', concrete_start)
@@ -92,15 +92,15 @@ def make_linux(program, argv=None, env=None, entry_symbol=None, symbolic_files=N
     return initial_state
 
 
-def make_initial_state(binary_path, **kwargs):
+def make_initial_state(m, binary_path, **kwargs):
     with open(binary_path, 'rb') as f:
         magic = f.read(4)
     if magic == b'\x7fELF':
         # Linux
-        state = make_linux(binary_path, **kwargs)
+        state = make_linux(m, binary_path, **kwargs)
     elif magic == b'\x7fCGC':
         # Decree
-        state = make_decree(binary_path, **kwargs)
+        state = make_decree(m, binary_path, **kwargs)
     else:
         raise NotImplementedError(f"Binary {binary_path} not supported.")
     return state
@@ -154,9 +154,10 @@ class Manticore(Eventful):
         if isinstance(path_or_state, str):
             if not os.path.isfile(path_or_state):
                 raise Exception(f'{path_or_state} is not an existing regular file')
-            self._initial_state = make_initial_state(path_or_state, argv=argv, **kwargs)
+            self._initial_state = make_initial_state(self, path_or_state, argv=argv, **kwargs)
         elif isinstance(path_or_state, State):
             self._initial_state = path_or_state
+            self._initial_state._manticore = self
             #froward events from newly loaded object
             self._executor.forward_events_from(self._initial_state, True)
         else:
