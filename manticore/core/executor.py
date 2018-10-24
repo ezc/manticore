@@ -447,6 +447,7 @@ class Executor(Eventful):
                                     if current_state_id is not None:
                                         self._publish('will_load_state', current_state_id)
                                         current_state = self._workspace.load_state(current_state_id)
+                                        # current_state._manticore =
                                         self.forward_events_from(current_state, True)
                                         self._publish('did_load_state', current_state, current_state_id)
                                         logger.info("load state %r", current_state_id)

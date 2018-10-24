@@ -107,6 +107,7 @@ class State(Eventful):
         self._context = state['context']
         # 33
         # Events are lost in serialization and fork !!
+        self._manticore = None  # need to be reconnected!!
         self.forward_events_from(self._platform)
 
     # Fixme(felipe) change for with "state.cow_copy() as st_temp":.
@@ -114,12 +115,12 @@ class State(Eventful):
     def __enter__(self):
         assert self._child is None
         self._platform.constraints = None
-        new_state = State(self._constraints.__enter__(), self._platform)
+        new_state = State(self._constraints.__enter__(), self._platform, self._manticore)
         self.platform.constraints = new_state.constraints
         new_state._input_symbols = list(self._input_symbols)
         new_state._context = copy.copy(self._context)
 
-        new_state._manticore = self._manticore
+        # new_state._manticore = self._manticore
         self.copy_eventful_state(new_state)
 
         self._child = new_state
@@ -492,3 +493,4 @@ class State(Eventful):
         """
         if self._manticore is not None:
             self._manticore._generate_testcase_callback(self, name, message)
+        # self._publish('will_generate_testcase', name, message)

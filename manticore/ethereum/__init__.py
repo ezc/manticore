@@ -1023,6 +1023,7 @@ class ManticoreEVM(Manticore):
         with self.locked_context('ethereum') as context:
             if len(context['_saved_states']) == 1:
                 self._initial_state = self._executor._workspace.load_state(context['_saved_states'].pop(), delete=True)
+                self._initial_state._manticore = self
                 self._executor.forward_events_from(self._initial_state, True)
                 context['_saved_states'] = set()
                 assert self._running_state_ids == (-1,)
@@ -1076,6 +1077,7 @@ class ManticoreEVM(Manticore):
         else:
             state = self._executor._workspace.load_state(state_id, delete=False)
             #froward events from newly loaded object
+            state._manticore = self
             self._executor.forward_events_from(state, True)
         return state
 
