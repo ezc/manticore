@@ -131,6 +131,8 @@ class Manticore(Eventful):
     def __init__(self, path_or_state, argv=None, workspace_url=None, policy='random', **kwargs):
         super().__init__()
 
+        assert False, 'test crash'
+
         if isinstance(workspace_url, str):
             if ':' not in workspace_url:
                 ws_path = f'fs:{workspace_url}'
